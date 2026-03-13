@@ -1,0 +1,19 @@
+[package]
+name = "neverlight-mail-oauth"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "OAuth 2.0 for public mail clients (draft-ietf-mailmaint-oauth-public)"
+repository = "https://github.com/jstelzer/neverlight-mail-oauth"
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+base64 = "0.22"
+rand = "0.9"
+tokio = { version = "1", features = ["net", "time", "io-util"] }
+open = "5"
+log = "0.4"
+thiserror = "2"
