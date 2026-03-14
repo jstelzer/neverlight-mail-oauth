@@ -74,15 +74,15 @@ let next_refresh = refreshed.refresh_token.as_deref()
 
 ## Modules
 
-| Module | Purpose |
-|---|---|
-| `discovery` | RFC 9728 + RFC 8414 metadata discovery chain |
-| `registration` | RFC 7591 dynamic client registration |
-| `pkce` | RFC 7636 S256 code challenge generation |
-| `exchange` | RFC 6749 authorization code exchange + token refresh |
-| `redirect` | Local HTTP server for desktop/TUI OAuth callbacks |
-| `flow` | `OAuthFlow` state machine orchestrating the full flow |
-| `types` | `AppInfo`, `OAuthMetadata`, `TokenSet`, `OAuthError`, etc. |
+| Module         | Purpose                                                    |
+|----------------|------------------------------------------------------------|
+| `discovery`    | RFC 9728 + RFC 8414 metadata discovery chain               |
+| `registration` | RFC 7591 dynamic client registration                       |
+| `pkce`         | RFC 7636 S256 code challenge generation                    |
+| `exchange`     | RFC 6749 authorization code exchange + token refresh       |
+| `redirect`     | Local HTTP server for desktop/TUI OAuth callbacks          |
+| `flow`         | `OAuthFlow` state machine orchestrating the full flow      |
+| `types`        | `AppInfo`, `OAuthMetadata`, `TokenSet`, `OAuthError`, etc. |
 
 ## Consumers
 
