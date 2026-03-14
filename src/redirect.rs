@@ -140,10 +140,15 @@ fn parse_callback_query(request: &str) -> Result<(String, String), OAuthError> {
         .nth(1)
         .ok_or_else(|| OAuthError::Redirect("Malformed request line".into()))?;
 
-    let query = path
+    let (path_part, query) = path
         .split_once('?')
-        .map(|(_, q)| q)
         .ok_or_else(|| OAuthError::Redirect("No query string in callback".into()))?;
+
+    if path_part != "/callback" {
+        return Err(OAuthError::Redirect(format!(
+            "Unexpected callback path: {path_part}"
+        )));
+    }
 
     let mut code = None;
     let mut state = None;
@@ -231,6 +236,12 @@ mod tests {
     #[test]
     fn rejects_missing_query_string() {
         let request = "GET /callback HTTP/1.1\r\n";
+        assert!(parse_callback_query(request).is_err());
+    }
+
+    #[test]
+    fn rejects_wrong_path() {
+        let request = "GET /other?code=abc&state=xyz HTTP/1.1\r\n";
         assert!(parse_callback_query(request).is_err());
     }
 

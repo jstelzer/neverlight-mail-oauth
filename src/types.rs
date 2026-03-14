@@ -25,7 +25,7 @@ pub struct ClientRegistration {
 #[derive(Debug, Clone)]
 pub struct TokenSet {
     pub access_token: String,
-    pub refresh_token: String,
+    pub refresh_token: Option<String>,
     pub expires_in: u64,
     pub scope: String,
 }

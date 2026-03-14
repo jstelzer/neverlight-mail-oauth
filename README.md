@@ -55,14 +55,21 @@ let flow = OAuthFlow::discover_and_register(
 ).await?;
 let tokens = flow.authorize(&handler).await?;
 
-// Later: refresh an expired access token
+// Later: refresh an expired access token.
+// The server may omit a new refresh token (RFC 6749 §6) —
+// fall back to the one you already have.
+let current_refresh = tokens.refresh_token.as_deref()
+    .expect("initial grant should include a refresh token");
 let refreshed = neverlight_mail_oauth::refresh_access_token(
     flow.token_endpoint(),
     flow.client_id(),
-    &tokens.refresh_token,
+    current_refresh,
     "urn:ietf:params:oauth:scope:mail",
     flow.resource(),
 ).await?;
+let next_refresh = refreshed.refresh_token.as_deref()
+    .unwrap_or(current_refresh);
+
 ```
 
 ## Modules

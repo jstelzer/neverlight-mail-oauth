@@ -77,8 +77,7 @@ async fn send_token_request(
     let refresh_token = body
         .get("refresh_token")
         .and_then(|v| v.as_str())
-        .ok_or_else(|| OAuthError::Exchange("Missing refresh_token".into()))?
-        .to_string();
+        .map(|s| s.to_string());
 
     let expires_in = body
         .get("expires_in")

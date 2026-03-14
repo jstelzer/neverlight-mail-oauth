@@ -110,14 +110,17 @@ async fn fetch_resource_metadata(
 }
 
 /// Step 3: Fetch authorization server metadata (RFC 8414).
+///
+/// Per RFC 8414 §3, the well-known URI is constructed by inserting
+/// `/.well-known/oauth-authorization-server` after the host (and port),
+/// followed by the issuer path. For example:
+///   `https://example.com/oauth2/default` →
+///   `https://example.com/.well-known/oauth-authorization-server/oauth2/default`
 async fn fetch_as_metadata(
     http: &reqwest::Client,
     issuer: &str,
 ) -> Result<OAuthMetadata, OAuthError> {
-    let url = format!(
-        "{}/.well-known/oauth-authorization-server",
-        issuer.trim_end_matches('/')
-    );
+    let url = build_as_metadata_url(issuer)?;
 
     let resp = http
         .get(&url)
@@ -146,6 +149,32 @@ async fn fetch_as_metadata(
     Ok(metadata)
 }
 
+/// Build the RFC 8414 well-known URL for an issuer.
+///
+/// The well-known suffix is inserted between the authority and the issuer path:
+///   `https://host/path` → `https://host/.well-known/oauth-authorization-server/path`
+fn build_as_metadata_url(issuer: &str) -> Result<String, OAuthError> {
+    let parsed = reqwest::Url::parse(issuer).map_err(|e| {
+        OAuthError::Discovery(format!("Invalid issuer URL '{issuer}': {e}"))
+    })?;
+
+    let scheme = parsed.scheme();
+    let host = parsed.host_str().ok_or_else(|| {
+        OAuthError::Discovery(format!("Issuer URL has no host: {issuer}"))
+    })?;
+    let origin = match parsed.port() {
+        Some(port) => format!("{scheme}://{host}:{port}"),
+        None => format!("{scheme}://{host}"),
+    };
+    let path = parsed.path().trim_matches('/');
+
+    if path.is_empty() {
+        Ok(format!("{origin}/.well-known/oauth-authorization-server"))
+    } else {
+        Ok(format!("{origin}/.well-known/oauth-authorization-server/{path}"))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -171,5 +200,35 @@ mod tests {
     fn rejects_missing_resource_metadata() {
         let header = "Bearer realm=\"jmap\"";
         assert!(parse_resource_metadata_url(header).is_err());
+    }
+
+    #[test]
+    fn builds_as_metadata_url_no_path() {
+        let url = build_as_metadata_url("https://auth.example.com").unwrap();
+        assert_eq!(url, "https://auth.example.com/.well-known/oauth-authorization-server");
+    }
+
+    #[test]
+    fn builds_as_metadata_url_with_trailing_slash() {
+        let url = build_as_metadata_url("https://auth.example.com/").unwrap();
+        assert_eq!(url, "https://auth.example.com/.well-known/oauth-authorization-server");
+    }
+
+    #[test]
+    fn builds_as_metadata_url_with_path() {
+        let url = build_as_metadata_url("https://example.com/oauth2/default").unwrap();
+        assert_eq!(
+            url,
+            "https://example.com/.well-known/oauth-authorization-server/oauth2/default"
+        );
+    }
+
+    #[test]
+    fn builds_as_metadata_url_with_port_and_path() {
+        let url = build_as_metadata_url("https://example.com:8443/tenant/v2").unwrap();
+        assert_eq!(
+            url,
+            "https://example.com:8443/.well-known/oauth-authorization-server/tenant/v2"
+        );
     }
 }
